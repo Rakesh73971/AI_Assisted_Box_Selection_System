@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from .pagination import OrderPagination
 from .models import Product, Order, OrderItem
 from .serializers import OrderSerializer, ShipmentRecommendationSerializer
 from .services import update_recommendation
@@ -11,7 +11,13 @@ from .services import update_recommendation
 class OrderListCreateAPIView(APIView):
     def get(self, request):
         orders = Order.objects.all().order_by("-created_at")
-        return Response(OrderSerializer(orders, many=True).data)
+
+        paginator = OrderPagination()
+        page = paginator.paginate_queryset(orders, request)
+
+        serializer = OrderSerializer(page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
         serializer = OrderSerializer(data=request.data)

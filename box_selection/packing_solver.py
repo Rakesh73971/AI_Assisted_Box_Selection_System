@@ -25,7 +25,13 @@ def _orientations(product):
 
 def _try_pack_box(box, flat_items):
     packed_items = []
-    candidates = [(0.0, 0.0, 0.0)]
+    candidates = [
+        (
+            Decimal("0"),
+            Decimal("0"),
+            Decimal("0"),
+        )
+    ]
 
     for product in flat_items:
         placed = False
@@ -44,8 +50,8 @@ def _try_pack_box(box, flat_items):
                 packed_items.append({
                     "sku": product.sku,
                     "name": product.name,
-                    "x": cx, "y": cy, "z": cz,
-                    "w": w, "h": h, "d": d,
+                    "x": float(cx), "y": float(cy), "z": float(cz),
+                    "w": float(w), "h": float(h), "d": float(d),
                 })
                 candidates.extend([(cx + w, cy, cz), (cx, cy + h, cz), (cx, cy, cz + d)])
                 candidates.remove((cx, cy, cz))
@@ -62,8 +68,8 @@ def _try_pack_box(box, flat_items):
 
 def solve_packing(order):
     flat_items = []
-    total_weight = 0.0
-    total_item_volume = 0.0
+    total_weight = Decimal("0.000")
+    total_item_volume = Decimal("0.0000")
 
     for item in order.items.select_related("product"):
         for _ in range(item.quantity):
@@ -74,8 +80,8 @@ def solve_packing(order):
     if not flat_items:
         return {
             "selected_box": None,
-            "volume_utilization": 0.0,
-            "weight_utilization": 0.0,
+            "volume_utilization": Decimal("0.00"),
+            "weight_utilization": Decimal("0.00"),
             "cost": Decimal("0.00"),
             "packing_layout": [],
             "error_reason": "Order has no items.",
@@ -100,8 +106,8 @@ def solve_packing(order):
 
         return {
             "selected_box": box,
-            "volume_utilization": round((total_item_volume / box.volume) * 100.0, 2),
-            "weight_utilization": round((total_weight / box.max_weight) * 100.0, 2),
+            "volume_utilization": ((total_item_volume / box.volume) * Decimal("100")).quantize(Decimal("0.01")),
+            "weight_utilization": ((total_item_volume / box.volume) * Decimal("100")).quantize(Decimal("0.01")),
             "cost": box.cost,
             "packing_layout": packed_items,
             "error_reason": None,

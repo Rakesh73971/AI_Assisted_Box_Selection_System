@@ -5,7 +5,9 @@ This document describes how AI tools were used during development of this assign
 ## 1. AI Tool(s) Used
 
 - **Cursor** (AI-assisted IDE, powered by Claude/GPT models)
-- Used for scaffolding, code review, documentation, and completing submission artifacts
+  - Used for scaffolding, initial views, and template setup.
+- **Antigravity** (Google DeepMind AI Coding Assistant)
+  - Used to implement the comprehensive unit and integration test suite, identify/resolve serialization bugs, update verification results, and prepare the repository deliverables.
 
 ## 2. Prompts Given
 
@@ -14,13 +16,9 @@ This document describes how AI tools were used during development of this assign
 - "Implement a 3D bin packing heuristic that selects the cheapest fitting box"
 - "Add REST API endpoints and a warehouse dashboard with packing visualization"
 
-### Completion session (this chat)
-- "Complete this assessment" — full submission including README, tests, AI_USAGE, TEST_OUTPUT, CI
-
-### Specific implementation prompts
-- "Write unit tests for cheapest box selection, weight limits, rotation, and API endpoints"
-- "Create a Django admin action to recalculate box recommendations"
-- "Add a seed_demo_data management command for local testing"
+### Completion & Testing session (this chat)
+- "write testing in the tests folder and write correct testing based on the name gave to the file"
+- Feedback on the implementation plan to make it professional, focus on cheapest box selection, verify packing layout coordinates, and cover edge cases.
 
 ## 3. Output Accepted
 
@@ -31,7 +29,7 @@ This document describes how AI tools were used during development of this assign
 | **API layer** | DRF serializers and views for products, boxes, orders, and recommend endpoint |
 | **Admin** | Inline order items, bulk "Calculate recommendation" action |
 | **Dashboard** | HTML template with order creation form, recommendation display, canvas 2D visualization |
-| **Tests** | 16 tests covering models, solver edge cases, and API integration |
+| **Tests** | 39 tests covering models, solver edge cases, transaction services, and API/dashboard integration |
 | **Docs/CI** | README, requirements.txt, GitHub Actions workflow, seed command |
 
 ## 4. Output Rejected or Modified
@@ -43,29 +41,30 @@ This document describes how AI tools were used during development of this assign
 | `{% else: %}` in Django template | **Modified** — invalid syntax; corrected to `{% else %}` |
 | Generic README without setup/API docs | **Modified** — expanded with design rationale, API table, and submission checklist |
 | Hardcoded box/product data only in tests | **Modified** — added `seed_demo_data` management command for demo workflow |
+| Generic API testing without error checks | **Modified** — expanded to test 400 Bad Request, 404 Not Found, duplicate order handling, and empty item rejection |
 
 ## 5. Mistakes the AI Made
 
 1. **Invalid Django template syntax** — Generated `{% else: %}` with a colon; Django requires `{% else %}` without colon. Caught when reviewing template before submission.
 2. **Over-engineering risk** — Initial suggestions leaned toward complex optimization libraries. I intentionally kept a simpler in-house heuristic for transparency and testability.
-3. **Heuristic false negatives** — The greedy packer may fail to find a valid layout even when one exists (known limitation of heuristics). Documented in README limitations section.
+3. **SQLite JSONField Decimal serialization error** — The initial solver code stored `Decimal` objects (e.g. coordinates and dimensions) in the `packing_layout` list. When saving to the SQLite database's JSONField, this threw a `TypeError: Object of type Decimal is not JSON serializable`. The assistant identified this mistake and resolved it by casting candidate and orientation layout numbers to `float` before returning.
 
 ## 6. How Final Code Was Verified
 
-1. **Automated tests** — `python manage.py test box_selection -v 2` → 16/16 passed
-2. **Manual logic review** — Verified overlap detection math, dimension sorting for rotation checks, and cost-ascending box iteration
-3. **API smoke test** — Order creation via POST returns recommendation with selected box
-4. **Template fix** — Confirmed dashboard renders without `TemplateSyntaxError`
-5. **Seed command** — `python manage.py seed_demo_data` loads demo catalog and produces a recommendation
-6. **CI workflow** — `.github/workflows/tests.yml` mirrors local test command for reproducibility
+1. **Automated tests** — `python manage.py test -v 2` → 39/39 passed successfully.
+2. **Manual logic review** — Verified overlap detection math, dimension sorting for rotation checks, and cost-ascending box iteration.
+3. **API smoke test** — Order creation via POST returns recommendation with selected box.
+4. **Template fix** — Confirmed dashboard renders without `TemplateSyntaxError`.
+5. **Seed command** — `python manage.py seed_demo_data` loads demo catalog and produces a recommendation.
+6. **CI workflow** — `.github/workflows/tests.yml` mirrors local test command for reproducibility.
 
 ## 7. What Was NOT Generated by AI (Per Assignment Rules)
 
 The following must be completed **manually by the candidate**:
 
-- **Chat transcript export** — Export from Cursor chat history yourself
-- **LEARNINGS.md** — Write your personal reflections in your own words
-- **GitHub repository** — Create repo and push code under your account
+- **Chat transcript export** — Export from chat history yourself.
+- **LEARNINGS.md** — Write your personal reflections in your own words.
+- **GitHub repository** — Create repo and push code under your account.
 
 ---
 

@@ -133,7 +133,11 @@ AI_Assisted_Box_Selection_System/
 │   ├── views.py               # REST API + dashboard view
 │   ├── serializers.py         # DRF serializers
 │   ├── admin.py               # Django Admin configuration
-│   ├── tests.py               # Unit and integration tests
+│   ├── tests/                 # Unit and integration test suites
+│   │   ├── test_api.py
+│   │   ├── test_models.py
+│   │   ├── test_services.py
+│   │   └── test_solver.py
 │   ├── management/commands/
 │   │   └── seed_demo_data.py  # Demo data loader
 │   └── templates/box_selection/dashboard.html
@@ -150,7 +154,7 @@ AI_Assisted_Box_Selection_System/
 
 - [x] README.md
 - [x] AI_USAGE.md
-- [x] Test cases (`box_selection/tests.py`)
+- [x] Test cases (`box_selection/tests/`)
 - [x] Test run output (`TEST_OUTPUT.md`)
 - [x] GitHub Actions CI (`.github/workflows/tests.yml`)
 - [ ] **GitHub repository link** — push this project to GitHub and add the URL
