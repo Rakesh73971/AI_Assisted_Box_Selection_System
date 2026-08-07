@@ -1,7 +1,13 @@
 # What I Learned
 
-1. I learned that 3D bin packing is much harder than it first appears because the search space grows quickly once you consider box dimensions, item rotations, and multiple items. Exact solutions become computationally expensive very quickly, so a heuristic approach is often the practical choice for this kind of assignment.
-2. I had to balance correctness and simplicity. A greedy solver is easier to explain and test, but it can miss a valid packing even when one exists. I chose a transparent approach that is reliable enough for the assignment while keeping the implementation understandable.
-3. The most challenging part was connecting the packing logic with Django’s model and API layers. The solver had to work naturally with the database models, generate persisted recommendations, and support both the dashboard and REST endpoints without creating inconsistent state.
-4. Using AI helped me move faster by suggesting structure, boilerplate, and test ideas. It also required me to review each suggestion carefully, because some outputs were too generic or needed corrections before they were safe to use.
-5. If I had more time, I would improve the packing algorithm to support more sophisticated placement heuristics and add richer validation for edge cases such as multi-box splitting and more complex order constraints.
+1. While working on this assignment, I realized that selecting the correct shipping box is not as simple as comparing dimensions. I had to consider item rotation, total weight, and how multiple products fit together inside a box.
+
+2. The packing algorithm was the most challenging part. I learned how a greedy approach works and why it is a practical solution even though it may not always find the perfect packing arrangement.
+
+3. I improved my understanding of Django by connecting the packing logic with models, services, APIs, and the dashboard. It helped me understand how different parts of a Django project work together.
+
+4. Writing tests taught me the importance of checking different scenarios instead of testing only successful cases. I added tests for invalid inputs, weight limits, dimension limits, inactive boxes, and API responses.
+
+5. During development, I found and fixed several issues, including model validation, Decimal vs Float handling, and improving the recommendation logic. Debugging these problems helped me understand the code much better.
+
+6. If I continue this project, I would like to improve the packing algorithm, support splitting orders into multiple boxes, add better logging, and optimize the API for larger datasets.
