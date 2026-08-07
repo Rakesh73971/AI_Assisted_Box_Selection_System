@@ -1,172 +1,316 @@
 # AI-Assisted Box Selection System
 
-A Django application that recommends the most suitable shipping box for ecommerce orders. Given product dimensions/weight and available box catalog, the system selects the **cheapest box that can physically fit all items** while respecting weight limits.
+A Django-based application that recommends the most cost-effective shipping box for an order based on product dimensions, weight, and available box sizes.
 
-## Problem Statement
+The system automatically determines whether all items can fit inside a single box while respecting weight limits and returns the cheapest valid option.
 
-When a customer places an order, warehouse staff need to know which shipping box to use. Each product has dimensions and weight; each box has internal dimensions, max weight capacity, and cost. This system automates that decision.
+---
 
-## Design Decisions
+## Features
 
-### Selection Strategy
+- Product, Box, Order, and Shipment Recommendation management
+- Automatic shipping box recommendation
+- 3D greedy packing with item rotation support
+- Weight and dimension validation
+- Django Admin for data management
+- REST API built with Django REST Framework
+- Web dashboard for creating orders and viewing recommendations
+- Pagination for API endpoints
+- Unit and integration tests using Pytest
 
-1. **Expand order items** — Each `OrderItem.quantity` becomes individual packable units.
-2. **Sort boxes by cost** — Cheapest active box is tried first (cost optimization).
-3. **Pre-check constraints** — Total weight and per-item dimension bounds (with rotation) are validated before running the packing simulation.
-4. **3D bin packing heuristic** — A greedy bottom-left-back placement algorithm tries all 6 orientations per item and tracks candidate anchor points to avoid overlap.
-5. **Return first valid box** — Because boxes are sorted by cost, the first successful pack is the cheapest feasible option.
+---
 
-### Why a Heuristic (Not Exact Solver)?
+## How It Works
 
-Exact 3D bin packing is NP-hard. For a warehouse hiring assignment, a transparent greedy heuristic balances correctness, performance, and explainability. The solver returns:
+When an order is created, the application:
 
-- Selected box
-- Volume and weight utilization %
-- Full 3D placement coordinates per item
-- Clear error reasons when no box fits
+1. Expands each order item based on its quantity.
+2. Calculates the total weight.
+3. Sorts active boxes by cost.
+4. Checks whether every product can fit inside each box (rotation supported).
+5. Attempts to place all items using a greedy 3D packing algorithm.
+6. Returns the first box that successfully fits all items.
 
-### Data Model
+If no suitable box is found, the system returns an appropriate error message.
 
-| Model                    | Purpose                                                       |
-| ------------------------ | ------------------------------------------------------------- |
-| `Product`                | Catalog item with W×H×D (cm) and weight (kg)                  |
-| `Box`                    | Shipping container with internal dimensions, max weight, cost |
-| `Order`                  | Customer order with status                                    |
-| `OrderItem`              | Product + quantity on an order                                |
-| `ShipmentRecommendation` | Cached packing result with layout JSON                        |
+---
+
+## Project Architecture
+
+```
+Order
+   │
+   ▼
+update_recommendation()
+   │
+   ▼
+solve_packing()
+   │
+   ▼
+ShipmentRecommendation
+```
+
+The project is organized into the following layers:
+
+- **Models** – Store products, boxes, orders, and recommendations
+- **Services** – Handle recommendation generation
+- **Packing Solver** – Contains the box selection algorithm
+- **Views & APIs** – REST endpoints and dashboard
+- **Admin** – Manage data through Django Admin
+
+---
+
+## Database Models
+
+| Model | Description |
+|-------|-------------|
+| Product | Product dimensions and weight |
+| Box | Available shipping boxes with dimensions, weight limit, and cost |
+| Order | Customer order |
+| OrderItem | Products belonging to an order |
+| ShipmentRecommendation | Stores the generated recommendation |
+
+---
 
 ## Tech Stack
 
-- Python 3.12+
-- Django 5.2.x
-- Django REST Framework 3.x
-- SQLite (development)
+- Python 3.11
+- Django 5.2
+- Django REST Framework
+- SQLite
+- Pytest
+- Git & GitHub
 
-## Setup
+---
+
+## Installation
+
+Clone the repository.
 
 ```bash
-# Clone the repository
-git clone <your-github-repo-url>
+git clone <repository-url>
+
 cd AI_Assisted_Box_Selection_System
+```
 
-# Create and activate a virtual environment (recommended)
-python -m venv venv
-# Windows
-venv\Scripts\activate
-# macOS/Linux
-source venv/bin/activate
+Create a virtual environment.
 
-# Install dependencies
+```bash
+python -m venv .venv
+```
+
+Activate it.
+
+**Windows**
+
+```bash
+.venv\Scripts\activate
+```
+
+**Linux/macOS**
+
+```bash
+source .venv/bin/activate
+```
+
+Install dependencies.
+
+```bash
 pip install -r requirements.txt
+```
 
-# Run migrations
+Run database migrations.
+
+```bash
 python manage.py migrate
+```
 
-# (Optional) Load demo products, boxes, and a sample order
+(Optional) Load demo data.
+
+```bash
 python manage.py seed_demo_data
+```
 
-# Create admin user (optional, for Django Admin)
+Create an admin account.
+
+```bash
 python manage.py createsuperuser
+```
 
-# Start the development server
+Run the development server.
+
+```bash
 python manage.py runserver
 ```
 
-Open:
+---
 
-- **Dashboard:** http://127.0.0.1:8000/
-- **Admin:** http://127.0.0.1:8000/admin/
-- **API:** http://127.0.0.1:8000/api/
+## Application URLs
 
-## Usage
+| Page | URL |
+|------|-----|
+| Dashboard | http://127.0.0.1:8000/ |
+| Django Admin | http://127.0.0.1:8000/admin/ |
+| REST API | http://127.0.0.1:8000/api/ |
 
-### Web Dashboard
+---
 
-1. Add products and boxes via Django Admin (`/admin/`).
-2. Create an order from the dashboard by entering order details and product quantities.
-3. View the recommended box, utilization metrics, placement coordinates, and a top-down 2D packing visualization.
+## REST API
 
-### REST API
+### Products
 
-| Method   | Endpoint                      | Description                                                      |
-| -------- | ----------------------------- | ---------------------------------------------------------------- |
-| GET/POST | `/api/products/`              | List or create products                                          |
-| GET/POST | `/api/boxes/`                 | List or create boxes                                             |
-| GET/POST | `/api/orders/`                | List or create orders (auto-calculates recommendation on create) |
-| GET      | `/api/orders/<id>/`           | Get order details with recommendation                            |
-| POST     | `/api/orders/<id>/recommend/` | Recalculate box recommendation                                   |
+| Method | Endpoint |
+|---------|----------|
+| GET | `/api/products/` |
+| POST | `/api/products/` |
 
-**Example: Create an order**
+### Boxes
+
+| Method | Endpoint |
+|---------|----------|
+| GET | `/api/boxes/` |
+| POST | `/api/boxes/` |
+
+### Orders
+
+| Method | Endpoint |
+|---------|----------|
+| GET | `/api/orders/` |
+| POST | `/api/orders/` |
+
+### Order Details
+
+| Method | Endpoint |
+|---------|----------|
+| GET | `/api/orders/<id>/` |
+
+### Generate Recommendation
+
+| Method | Endpoint |
+|---------|----------|
+| POST | `/api/orders/<id>/recommend/` |
+
+---
+
+## Example Request
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/orders/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "order_number": "ORD-1001",
-    "customer_name": "Jane Smith",
-    "status": "Pending",
-    "items": [{"product_id": 1, "quantity": 2}]
-  }'
+-H "Content-Type: application/json" \
+-d '{
+    "order_number":"ORD-1001",
+    "customer_name":"John Doe",
+    "items":[
+        {
+            "product_id":1,
+            "quantity":2
+        }
+    ]
+}'
 ```
 
-### Django Admin
-
-- Manage products and boxes
-- Create orders with inline order items
-- Bulk action: **Calculate shipping box recommendation** on selected orders
+---
 
 ## Running Tests
 
+Using Django:
+
 ```bash
-python manage.py test box_selection -v 2
+python manage.py test
 ```
 
-See [TEST_OUTPUT.md](TEST_OUTPUT.md) for the latest test run output.
+Using Pytest:
+
+```bash
+pytest
+```
+
+---
 
 ## Project Structure
 
 ```
 AI_Assisted_Box_Selection_System/
+│
+├── .github/
+│   └── workflows/
+│       └── tests.yml
+│
 ├── box_selection/
-│   ├── models.py              # Product, Box, Order, OrderItem, ShipmentRecommendation
-│   ├── packing_solver.py      # 3D bin packing + box selection logic
-│   ├── views.py               # REST API + dashboard view
-│   ├── serializers.py         # DRF serializers
-│   ├── admin.py               # Django Admin configuration
-│   ├── tests/                 # Unit and integration test suites
+│   ├── management/
+│   │   └── commands/
+│   │       └── seed_demo_data.py
+│   ├── templates/
+│   ├── tests/
 │   │   ├── test_api.py
 │   │   ├── test_models.py
 │   │   ├── test_services.py
 │   │   └── test_solver.py
-│   ├── management/commands/
-│   │   └── seed_demo_data.py  # Demo data loader
-│   └── templates/box_selection/dashboard.html
-├── box_selection_project/     # Django project settings
-├── .github/workflows/tests.yml
-├── requirements.txt
-├── README.md
+│   ├── admin.py
+│   ├── models.py
+│   ├── serializers.py
+│   ├── services.py
+│   ├── packing_solver.py
+│   ├── urls.py
+│   └── views.py
+│
+├── box_selection_project/
+│
+├── .gitignore
 ├── AI_USAGE.md
+├── CHAT_TRANSCRIPT.md
+├── LEARNINGS.md
+├── README.md
 ├── TEST_OUTPUT.md
-└── LEARNINGS.md               # Your personal reflections (fill in yourself)
+├── manage.py
+├── pytest.ini
+├── requirements.txt
+└── db.sqlite3
 ```
 
-## Submission Checklist
+---
 
-- [x] README.md
-- [x] AI_USAGE.md
-- [x] Test cases (`box_selection/tests/`)
-- [x] Test run output (`TEST_OUTPUT.md`)
-- [x] GitHub Actions CI (`.github/workflows/tests.yml`)
-- [ ] **GitHub repository link** — push this project to GitHub and add the URL
-- [ ] **Chat transcript export** — export from Cursor manually (do not generate with AI)
-- [ ] **LEARNINGS.md** — write your own reflections (do not use AI)
+## Design Decisions
+
+- Selected the cheapest valid box instead of the smallest by volume.
+- Used a greedy packing algorithm to keep the solution simple and maintainable.
+- Allowed item rotation while packing.
+- Stored packing layouts as JSON for easy visualization and API responses.
+- Kept recommendation generation in a separate service layer to improve code organization.
+
+---
 
 ## Limitations
 
-- The packing algorithm is heuristic; some valid packings may not be found.
-- Items are treated as rigid rectangular boxes (no fragility or stacking rules).
-- Only single-box shipments are supported (no multi-box splitting).
+- Uses a greedy heuristic rather than an optimal packing algorithm.
+- Supports only single-box shipments.
+- Does not consider fragile items or stacking rules.
+- Packing accuracy depends on the heuristic and may not find every valid arrangement.
+
+---
+
+## Future Improvements
+
+- Support multi-box shipments.
+- Improve packing heuristics.
+- Add box visualization in 3D.
+- Add authentication and user management.
+- Deploy using PostgreSQL and Docker.
+
+---
+
+## Submission Files
+
+- ✅ README.md
+- ✅ AI_USAGE.md
+- ✅ LEARNINGS.md
+- ✅ Test cases
+- ✅ TEST_OUTPUT.md
+- ✅ GitHub Repository
+- ✅ Chat Transcript
+
+---
 
 ## License
 
-Submitted as a hiring assignment project.
+This project was developed for educational and technical evaluation purposes.

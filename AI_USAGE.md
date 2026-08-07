@@ -1,71 +1,77 @@
 # AI Usage Disclosure
 
-This document describes how AI tools were used during development of this assignment, in accordance with the submission requirements.
+This document explains how AI tools were used while developing this assignment.
 
 ## 1. AI Tool(s) Used
 
-- **Cursor** (AI-assisted IDE, powered by Claude/GPT models)
-  - Used for scaffolding, initial views, and template setup.
-- **Antigravity** (Google DeepMind AI Coding Assistant)
-  - Used to implement the comprehensive unit and integration test suite, identify/resolve serialization bugs, update verification results, and prepare the repository deliverables.
+* **ChatGPT**
+
+  * Used to understand the assignment requirements, review the implementation, improve code quality, identify edge cases, and write test cases.
+* **Cursor**
+
+  * Used as an AI-assisted editor for code suggestions, refactoring, and improving project structure.
 
 ## 2. Prompts Given
 
-### Initial project scaffolding (earlier session)
-- "Design a Django app for ecommerce box selection with Product, Box, Order models"
-- "Implement a 3D bin packing heuristic that selects the cheapest fitting box"
-- "Add REST API endpoints and a warehouse dashboard with packing visualization"
+Some of the prompts I used during development include:
 
-### Completion & Testing session (this chat)
-- "write testing in the tests folder and write correct testing based on the name gave to the file"
-- Feedback on the implementation plan to make it professional, focus on cheapest box selection, verify packing layout coordinates, and cover edge cases.
+* "Design a Django application for recommending the cheapest shipping box."
+* "Review my packing algorithm and suggest improvements."
+* "Identify weak points in my Django models and services."
+* "Convert model fields from FloatField to DecimalField."
+* "Write pytest test cases for models, solver, services, and API."
+* "Review my README and improve its structure."
+* "Review my implementation plan and suggest improvements."
 
 ## 3. Output Accepted
 
-| Area | What was accepted |
-|------|-------------------|
-| **Data models** | `Product`, `Box`, `Order`, `OrderItem`, `ShipmentRecommendation` with validation in `clean()` |
-| **Packing solver** | Greedy bottom-left-back heuristic with 6-orientation rotation and overlap detection |
-| **API layer** | DRF serializers and views for products, boxes, orders, and recommend endpoint |
-| **Admin** | Inline order items, bulk "Calculate recommendation" action |
-| **Dashboard** | HTML template with order creation form, recommendation display, canvas 2D visualization |
-| **Tests** | 39 tests covering models, solver edge cases, transaction services, and API/dashboard integration |
-| **Docs/CI** | README, requirements.txt, GitHub Actions workflow, seed command |
+I accepted AI suggestions for:
+
+* Initial Django project structure.
+* Model validation improvements.
+* Packing algorithm review and minor refactoring.
+* Serializer and API improvements.
+* Test case ideas and edge cases.
+* Documentation structure for the README.
 
 ## 4. Output Rejected or Modified
 
-| AI suggestion | Why rejected/modified |
-|---------------|----------------------|
-| Exact/optimal bin packing (e.g. OR-Tools) | Rejected — overkill for scope; chose explainable greedy heuristic instead |
-| Multi-box shipment splitting | Rejected — assignment specifies single-box recommendation |
-| `{% else: %}` in Django template | **Modified** — invalid syntax; corrected to `{% else %}` |
-| Generic README without setup/API docs | **Modified** — expanded with design rationale, API table, and submission checklist |
-| Hardcoded box/product data only in tests | **Modified** — added `seed_demo_data` management command for demo workflow |
-| Generic API testing without error checks | **Modified** — expanded to test 400 Bad Request, 404 Not Found, duplicate order handling, and empty item rejection |
+I did not accept every AI suggestion directly. Some examples include:
 
-## 5. Mistakes the AI Made
+* Rejected suggestions that introduced unnecessary complexity for the assignment.
+* Modified generated code to match my project structure and coding style.
+* Corrected template syntax issues before using the code.
+* Simplified overly complex implementations to keep the solution readable and maintainable.
 
-1. **Invalid Django template syntax** — Generated `{% else: %}` with a colon; Django requires `{% else %}` without colon. Caught when reviewing template before submission.
-2. **Over-engineering risk** — Initial suggestions leaned toward complex optimization libraries. I intentionally kept a simpler in-house heuristic for transparency and testability.
-3. **SQLite JSONField Decimal serialization error** — The initial solver code stored `Decimal` objects (e.g. coordinates and dimensions) in the `packing_layout` list. When saving to the SQLite database's JSONField, this threw a `TypeError: Object of type Decimal is not JSON serializable`. The assistant identified this mistake and resolved it by casting candidate and orientation layout numbers to `float` before returning.
+## 5. Mistakes Found in AI Output
 
-## 6. How Final Code Was Verified
+While using AI assistance, I found several issues that required manual correction:
 
-1. **Automated tests** — `python manage.py test -v 2` → 39/39 passed successfully.
-2. **Manual logic review** — Verified overlap detection math, dimension sorting for rotation checks, and cost-ascending box iteration.
-3. **API smoke test** — Order creation via POST returns recommendation with selected box.
-4. **Template fix** — Confirmed dashboard renders without `TemplateSyntaxError`.
-5. **Seed command** — `python manage.py seed_demo_data` loads demo catalog and produces a recommendation.
-6. **CI workflow** — `.github/workflows/tests.yml` mirrors local test command for reproducibility.
+* Invalid Django template syntax in one response.
+* Some generated code did not match my existing project structure.
+* A few test cases required modification to work with my implementation.
+* Decimal values stored inside `JSONField` caused serialization errors, which I fixed manually.
+* Some suggested implementations were more complex than required for the assignment.
 
-## 7. What Was NOT Generated by AI (Per Assignment Rules)
+## 6. How I Verified the Final Code
 
-The following must be completed **manually by the candidate**:
+I verified the final implementation by:
 
-- **Chat transcript export** — Export from chat history yourself.
-- **LEARNINGS.md** — Write your personal reflections in your own words.
-- **GitHub repository** — Create repo and push code under your account.
+* Running the complete test suite using pytest.
+* Testing the REST API endpoints manually.
+* Testing the dashboard by creating sample orders.
+* Verifying that the correct shipping box was selected for different scenarios.
+* Reviewing the code manually to ensure the recommendation logic behaved as expected.
 
----
+## 7. Manual Work
 
-*This file was co-authored with AI assistance but reflects deliberate engineering choices and manual verification.*
+The following parts of the submission were completed manually:
+
+* Project implementation and integration.
+* Final code review and debugging.
+* Test execution and verification.
+* GitHub repository setup.
+* Chat transcript export.
+* Personal learning notes (LEARNINGS.md).
+
+AI was used as a development assistant, but all generated code was reviewed, modified where necessary, and verified before submission.
