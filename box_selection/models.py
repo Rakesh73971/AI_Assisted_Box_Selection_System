@@ -1,13 +1,18 @@
-from django.db import models
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
+from django.db import models
+
 
 class Product(models.Model):
     name = models.CharField(max_length=255)
     sku = models.CharField(max_length=100, unique=True)
-    width = models.FloatField(help_text="Width in cm")
-    height = models.FloatField(help_text="Height in cm")
-    depth = models.FloatField(help_text="Depth in cm")
-    weight = models.FloatField(help_text="Weight in kg")
+
+    width = models.DecimalField(max_digits=8, decimal_places=2, help_text="Width in cm")
+    height = models.DecimalField(max_digits=8, decimal_places=2, help_text="Height in cm")
+    depth = models.DecimalField(max_digits=8, decimal_places=2, help_text="Depth in cm")
+
+    weight = models.DecimalField(max_digits=8, decimal_places=3, help_text="Weight in kg")
 
     def __str__(self):
         return f"{self.name} ({self.sku})"
@@ -16,57 +21,88 @@ class Product(models.Model):
     def volume(self):
         return self.width * self.height * self.depth
 
+    def clean(self):
+        if self.width <= Decimal("0"):
+            raise ValidationError({"width": "Width must be greater than zero."})
+
+        if self.height <= Decimal("0"):
+            raise ValidationError({"height": "Height must be greater than zero."})
+
+        if self.depth <= Decimal("0"):
+            raise ValidationError({"depth": "Depth must be greater than zero."})
+
+        if self.weight <= Decimal("0"):
+            raise ValidationError({"weight": "Weight must be greater than zero."})
+
     def save(self, *args, **kwargs):
         self.full_clean()
-        return super().save(*args, **kwargs)
-
-    def clean(self):
-        if self.width <= 0 or self.height <= 0 or self.depth <= 0:
-            raise ValidationError("Dimensions must be greater than zero.")
-        if self.weight <= 0:
-            raise ValidationError("Weight must be greater than zero.")
+        super().save(*args, **kwargs)
 
 
 class Box(models.Model):
     name = models.CharField(max_length=255)
-    width = models.FloatField(help_text="Internal width in cm")
-    height = models.FloatField(help_text="Internal height in cm")
-    depth = models.FloatField(help_text="Internal depth in cm")
-    max_weight = models.FloatField(help_text="Maximum weight capacity in kg")
+
+    width = models.DecimalField(max_digits=8, decimal_places=2, help_text="Internal width in cm")
+    height = models.DecimalField(max_digits=8, decimal_places=2, help_text="Internal height in cm")
+    depth = models.DecimalField(max_digits=8, decimal_places=2, help_text="Internal depth in cm")
+
+    max_weight = models.DecimalField(max_digits=8, decimal_places=3, help_text="Maximum weight capacity in kg")
+
     cost = models.DecimalField(max_digits=10, decimal_places=2, help_text="Cost in USD")
+
     is_active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural = "Boxes"
 
     def __str__(self):
-        return f"{self.name} ({self.width}x{self.height}x{self.depth} cm, max {self.max_weight}kg, ${self.cost})"
+        return (
+            f"{self.name} "
+            f"({self.width}×{self.height}×{self.depth} cm, "
+            f"max {self.max_weight} kg, ${self.cost})"
+        )
 
     @property
     def volume(self):
         return self.width * self.height * self.depth
 
+    def clean(self):
+        if self.width <= Decimal("0"):
+            raise ValidationError({"width": "Width must be greater than zero."})
+
+        if self.height <= Decimal("0"):
+            raise ValidationError({"height": "Height must be greater than zero."})
+
+        if self.depth <= Decimal("0"):
+            raise ValidationError({"depth": "Depth must be greater than zero."})
+
+        if self.max_weight <= Decimal("0"):
+            raise ValidationError({"max_weight": "Maximum weight must be greater than zero."})
+
+        if self.cost < Decimal("0"):
+            raise ValidationError({"cost": "Cost cannot be negative."})
+
     def save(self, *args, **kwargs):
         self.full_clean()
-        return super().save(*args, **kwargs)
-
-    def clean(self):
-        if self.width <= 0 or self.height <= 0 or self.depth <= 0:
-            raise ValidationError("Dimensions must be greater than zero.")
-        if self.max_weight <= 0:
-            raise ValidationError("Maximum weight capacity must be greater than zero.")
-        if self.cost < 0:
-            raise ValidationError("Cost cannot be negative.")
+        super().save(*args, **kwargs)
 
 
 class Order(models.Model):
+    STATUS_PENDING = "Pending"
+    STATUS_PACKED = "Packed"
+
     STATUS_CHOICES = [
-        ('Pending', 'Pending'),
-        ('Packed', 'Packed'),
+        (STATUS_PENDING, "Pending"),
+        (STATUS_PACKED, "Packed"),
     ]
+
     order_number = models.CharField(max_length=100, unique=True)
     customer_name = models.CharField(max_length=255)
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pending')
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
